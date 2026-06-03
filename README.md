@@ -1,5 +1,6 @@
 # Tech-Law RAG: IT Compliance and Contract Analyzer
-<img src="./assets/img.png" alt="Tech-Law RAG Banner" width="800" />
+
+![Tech-Law RAG Banner](./assets/img.png)
 
 The technology sector deals daily with software contracts, SLAs (Service Level Agreements), NDAs, and privacy policies (e.g., GDPR/LGPD). This project bridges the software development world with compliance rules and regulations.
 
@@ -29,7 +30,10 @@ The technology sector deals daily with software contracts, SLAs (Service Level A
 * **NFR04 (Observability):** Every request made to the OpenAI model must be monitored for latency control, token costs, and potential hallucinations.
 
 ### Phase 2: System Design and Modeling (Architecture)
-<img src="./assets/diagram.png" alt="Tech-Law RAG Cover" width="800" />
+
+<div align="center">
+  <img src="./assets/diagram.png" alt="Tech-Law RAG Cover" width="800" />
+</div>
 
 ### Phase 3: Building the AI Engine
 This phase focuses exclusively on the backend and artificial intelligence, creating the bridge between the code and the remote database.
