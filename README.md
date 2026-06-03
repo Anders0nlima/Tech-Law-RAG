@@ -1,6 +1,8 @@
 # Tech-Law RAG: IT Compliance and Contract Analyzer
 
-![Tech-Law RAG Banner](./assets/img.png)
+<div align="center">
+<img src="https://github.com/user-attachments/assets/f1b98d04-65ba-4875-88be-6c2ceee0a75d" width="700px" />
+</div>
 
 The technology sector deals daily with software contracts, SLAs (Service Level Agreements), NDAs, and privacy policies (e.g., GDPR/LGPD). This project bridges the software development world with compliance rules and regulations.
 
@@ -32,7 +34,7 @@ The technology sector deals daily with software contracts, SLAs (Service Level A
 ### Phase 2: System Design and Modeling (Architecture)
 
 <div align="center">
-  <img src="./assets/diagram.png" alt="Tech-Law RAG Cover" width="800" />
+  <img src="https://github.com/user-attachments/assets/83a31d98-b8ff-4279-b2bc-2372e5585f53" alt="Tech-Law RAG Cover" width="800" />
 </div>
 
 ### Phase 3: Building the AI Engine
