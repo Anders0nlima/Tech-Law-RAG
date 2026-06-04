@@ -13,6 +13,8 @@ from app.services.embedding_provider import (
     EmbeddingProvider,
     EmbeddingProviderError,
     MockEmbeddingProvider,
+    OpenAIEmbeddingProvider,
+    create_embedding_provider,
 )
 
 __all__ = [
@@ -20,10 +22,12 @@ __all__ = [
     "EmbeddingProvider",
     "EmbeddingProviderError",
     "MockEmbeddingProvider",
+    "OpenAIEmbeddingProvider",
     "DocumentChunkPersistenceError",
     "PersistDocumentChunksCommand",
     "TextChunk",
     "TextChunkingError",
     "chunk_contract_text",
+    "create_embedding_provider",
     "persist_document_chunks",
 ]
