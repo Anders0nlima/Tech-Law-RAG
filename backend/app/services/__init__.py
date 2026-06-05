@@ -21,6 +21,10 @@ from app.services.analysis_prompt import (
     LLMRiskDossierOutput,
     build_analysis_prompt,
 )
+from app.services.dossier_generator import (
+    DossierGenerationError,
+    generate_risk_dossier,
+)
 
 __all__ = [
     "ChunkingConfig",
@@ -38,4 +42,6 @@ __all__ = [
     "LLMRiskFinding",
     "LLMRiskDossierOutput",
     "build_analysis_prompt",
+    "DossierGenerationError",
+    "generate_risk_dossier",
 ]

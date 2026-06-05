@@ -42,6 +42,15 @@ class DocumentChunkRepository(Protocol):
     ) -> PersistedDocument:
         """Persist a document record and its vectorized chunks."""
 
+    async def get_relevant_chunks(
+        self,
+        *,
+        document_id: UUID,
+        query_embedding: Sequence[float],
+        limit: int = 10,
+    ) -> list[str]:
+        """Retrieve the most relevant chunk contents for a given document."""
+
 
 @dataclass(frozen=True)
 class PostgresDocumentChunkRepository:
@@ -80,6 +89,31 @@ class PostgresDocumentChunkRepository:
             total_pages=document_row["total_pages"],
             total_chunks=document_row["total_chunks"],
         )
+
+    async def get_relevant_chunks(
+        self,
+        *,
+        document_id: UUID,
+        query_embedding: Sequence[float],
+        limit: int = 10,
+    ) -> list[str]:
+        async with await AsyncConnection.connect(
+            self.database_url,
+            row_factory=dict_row,
+        ) as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select content
+                    from public.document_chunks
+                    where document_id = %s
+                    order by embedding <=> %s::extensions.vector
+                    limit %s
+                    """,
+                    (document_id, _to_pgvector_literal(query_embedding), limit),
+                )
+                rows = await cursor.fetchall()
+                return [row["content"] for row in rows]
 
     async def _insert_document(
         self,
