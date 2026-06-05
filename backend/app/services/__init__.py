@@ -16,6 +16,11 @@ from app.services.embedding_provider import (
     OpenAIEmbeddingProvider,
     create_embedding_provider,
 )
+from app.services.analysis_prompt import (
+    LLMRiskFinding,
+    LLMRiskDossierOutput,
+    build_analysis_prompt,
+)
 
 __all__ = [
     "ChunkingConfig",
@@ -30,4 +35,7 @@ __all__ = [
     "chunk_contract_text",
     "create_embedding_provider",
     "persist_document_chunks",
+    "LLMRiskFinding",
+    "LLMRiskDossierOutput",
+    "build_analysis_prompt",
 ]
