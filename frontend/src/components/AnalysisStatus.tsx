@@ -7,6 +7,7 @@ interface AnalysisStatusProps {
   analysis: DocumentAnalysis;
   onCompleted: (analysis: DocumentAnalysis) => void;
   onReset: () => void;
+  onViewDossier: () => void;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -23,7 +24,12 @@ const STATUS_ICONS: Record<string, string> = {
   failed: '❌',
 };
 
-export default function AnalysisStatus({ analysis, onCompleted, onReset }: AnalysisStatusProps) {
+export default function AnalysisStatus({
+  analysis,
+  onCompleted,
+  onReset,
+  onViewDossier,
+}: AnalysisStatusProps) {
   const [current, setCurrent] = useState<DocumentAnalysis>(analysis);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -100,6 +106,11 @@ export default function AnalysisStatus({ analysis, onCompleted, onReset }: Analy
         <button className="btn btn-ghost" onClick={onReset}>
           ← Novo Upload
         </button>
+        {current.status === 'completed' && (
+          <button className="btn btn-primary" onClick={onViewDossier}>
+            Visualizar Dossiê →
+          </button>
+        )}
       </div>
     </div>
   );

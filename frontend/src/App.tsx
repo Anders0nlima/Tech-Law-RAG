@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react';
 import UploadZone from './components/UploadZone';
 import AnalysisStatus from './components/AnalysisStatus';
+import DossierViewer from './components/DossierViewer';
 import type { DocumentAnalysis } from './types';
 import { getHealth } from './api';
 import './App.css';
 
-type AppView = 'upload' | 'status';
+type AppView = 'upload' | 'status' | 'dossier';
 
 function App() {
   const [view, setView] = useState<AppView>('upload');
@@ -25,6 +26,10 @@ function App() {
 
   const handleAnalysisCompleted = useCallback((result: DocumentAnalysis) => {
     setAnalysis(result);
+  }, []);
+
+  const handleViewDossier = useCallback(() => {
+    setView('dossier');
   }, []);
 
   const handleReset = useCallback(() => {
@@ -70,6 +75,14 @@ function App() {
           <AnalysisStatus
             analysis={analysis}
             onCompleted={handleAnalysisCompleted}
+            onReset={handleReset}
+            onViewDossier={handleViewDossier}
+          />
+        )}
+
+        {view === 'dossier' && analysis && analysis.dossier && (
+          <DossierViewer
+            dossier={analysis.dossier}
             onReset={handleReset}
           />
         )}
