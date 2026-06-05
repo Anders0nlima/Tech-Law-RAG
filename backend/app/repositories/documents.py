@@ -24,6 +24,9 @@ class DocumentRepository(Protocol):
     async def get_document_analysis(self, document_id: UUID) -> DocumentAnalysis | None:
         """Fetch the analysis status, joined with the dossier if completed."""
 
+    async def get_all_documents(self) -> list[DocumentAnalysis]:
+        """Fetch all analyzed documents, joined with their dossiers if completed, ordered by created_at desc."""
+
 
 @dataclass(frozen=True)
 class PostgresDocumentRepository:
@@ -101,3 +104,44 @@ class PostgresDocumentRepository:
                     error_message=row["error_message"],
                     dossier=dossier,
                 )
+
+    async def get_all_documents(self) -> list[DocumentAnalysis]:
+        async with await AsyncConnection.connect(self.database_url, row_factory=dict_row) as conn:
+            async with conn.cursor() as cursor:
+                await cursor.execute(
+                    """
+                    select d.id, d.original_filename, d.status, d.created_at, d.updated_at, d.error_message,
+                           rd.id as dossier_id, rd.overall_risk_level, rd.executive_summary, rd.findings, 
+                           rd.technical_recommendations, rd.generated_at
+                    from public.documents d
+                    left join public.risk_dossiers rd on d.id = rd.document_id
+                    order by d.created_at desc
+                    """
+                )
+                rows = await cursor.fetchall()
+                
+                results = []
+                for row in rows:
+                    dossier = None
+                    if row["overall_risk_level"] is not None:
+                        dossier = RiskDossier(
+                            id=row["dossier_id"],
+                            document_id=row["id"],
+                            document_name=row["original_filename"],
+                            generated_at=row["generated_at"],
+                            executive_summary=row["executive_summary"],
+                            overall_risk_level=row["overall_risk_level"],
+                            findings=[RiskFinding(**f) for f in row["findings"]],
+                            technical_recommendations=row["technical_recommendations"],
+                        )
+
+                    results.append(DocumentAnalysis(
+                        id=row["id"],
+                        document_name=row["original_filename"],
+                        status=AnalysisStatus(row["status"]),
+                        created_at=row["created_at"],
+                        updated_at=row["updated_at"],
+                        error_message=row["error_message"],
+                        dossier=dossier,
+                    ))
+                return results

@@ -39,6 +39,12 @@ export async function getAnalysis(id: string): Promise<DocumentAnalysis> {
   return handleResponse<DocumentAnalysis>(response);
 }
 
+/** List all analysis history. */
+export async function listAnalyses(): Promise<DocumentAnalysis[]> {
+  const response = await fetch(`${API_BASE}/analysis/`);
+  return handleResponse<DocumentAnalysis[]>(response);
+}
+
 /** Check backend health. */
 export async function getHealth(): Promise<{ status: string }> {
   const response = await fetch(`${API_BASE}/health`);

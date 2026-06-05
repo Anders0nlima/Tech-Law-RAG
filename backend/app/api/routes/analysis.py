@@ -105,3 +105,13 @@ async def get_analysis_status(
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found.")
     return analysis
+
+
+@router.get("/", response_model=list[DocumentAnalysis])
+async def list_analyses(
+    document_repo: PostgresDocumentRepository = Depends(get_document_repo),
+):
+    """
+    Fetch the history of all analysis jobs.
+    """
+    return await document_repo.get_all_documents()

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import UploadZone from './components/UploadZone';
 import AnalysisStatus from './components/AnalysisStatus';
 import DossierViewer from './components/DossierViewer';
+import AnalysisHistory from './components/AnalysisHistory';
 import type { DocumentAnalysis } from './types';
 import { getHealth } from './api';
 import './App.css';
@@ -37,6 +38,15 @@ function App() {
     setView('upload');
   }, []);
 
+  const handleSelectHistory = useCallback((selected: DocumentAnalysis) => {
+    setAnalysis(selected);
+    if (selected.status === 'completed' && selected.dossier) {
+      setView('dossier');
+    } else {
+      setView('status');
+    }
+  }, []);
+
   return (
     <div className="app-layout">
       {/* Header */}
@@ -68,7 +78,10 @@ function App() {
         </div>
 
         {view === 'upload' && (
-          <UploadZone onUploadComplete={handleUploadComplete} />
+          <>
+            <UploadZone onUploadComplete={handleUploadComplete} />
+            <AnalysisHistory onSelectAnalysis={handleSelectHistory} />
+          </>
         )}
 
         {view === 'status' && analysis && (
