@@ -35,7 +35,8 @@ async def generate_risk_dossier(
 
     # 2. Embed the query
     try:
-        query_embedding = await embedding_provider.embed_text(search_query)
+        embeddings = await embedding_provider.embed_texts([search_query])
+        query_embedding = embeddings[0]
     except Exception as e:
         raise DossierGenerationError(f"Failed to generate embedding for query: {e}")
 

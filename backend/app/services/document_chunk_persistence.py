@@ -1,11 +1,11 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from hashlib import sha256
+from uuid import UUID
 
 from app.repositories import (
     DocumentChunkRepository,
     PersistableDocumentChunk,
-    PersistedDocument,
 )
 from app.services.contract_text_chunker import TextChunk
 
@@ -16,8 +16,7 @@ class DocumentChunkPersistenceError(Exception):
 
 @dataclass(frozen=True)
 class PersistDocumentChunksCommand:
-    original_filename: str
-    file_bytes: bytes
+    document_id: UUID
     total_pages: int
     chunks: Sequence[TextChunk]
     embeddings: Sequence[Sequence[float]]
@@ -26,7 +25,7 @@ class PersistDocumentChunksCommand:
 async def persist_document_chunks(
     command: PersistDocumentChunksCommand,
     repository: DocumentChunkRepository,
-) -> PersistedDocument:
+) -> None:
     if len(command.chunks) != len(command.embeddings):
         raise DocumentChunkPersistenceError(
             "Chunks and embeddings must have the same length."
@@ -45,9 +44,8 @@ async def persist_document_chunks(
         for chunk, embedding in zip(command.chunks, command.embeddings, strict=True)
     ]
 
-    return await repository.save_document_chunks(
-        original_filename=command.original_filename,
-        content_sha256=sha256(command.file_bytes).hexdigest(),
+    await repository.save_document_chunks(
+        document_id=command.document_id,
         total_pages=command.total_pages,
         chunks=persistable_chunks,
     )

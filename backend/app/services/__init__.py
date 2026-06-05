@@ -25,6 +25,7 @@ from app.services.dossier_generator import (
     DossierGenerationError,
     generate_risk_dossier,
 )
+from app.services.workflow import run_analysis_workflow
 
 __all__ = [
     "ChunkingConfig",
@@ -44,4 +45,5 @@ __all__ = [
     "build_analysis_prompt",
     "DossierGenerationError",
     "generate_risk_dossier",
+    "run_analysis_workflow",
 ]

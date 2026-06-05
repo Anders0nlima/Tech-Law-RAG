@@ -35,12 +35,11 @@ class DocumentChunkRepository(Protocol):
     async def save_document_chunks(
         self,
         *,
-        original_filename: str,
-        content_sha256: str,
+        document_id: UUID,
         total_pages: int,
         chunks: Sequence[PersistableDocumentChunk],
-    ) -> PersistedDocument:
-        """Persist a document record and its vectorized chunks."""
+    ) -> None:
+        """Persist vectorized chunks for an existing document."""
 
     async def get_relevant_chunks(
         self,
@@ -59,11 +58,10 @@ class PostgresDocumentChunkRepository:
     async def save_document_chunks(
         self,
         *,
-        original_filename: str,
-        content_sha256: str,
+        document_id: UUID,
         total_pages: int,
         chunks: Sequence[PersistableDocumentChunk],
-    ) -> PersistedDocument:
+    ) -> None:
         if not chunks:
             raise DocumentPersistenceError("Cannot persist a document without chunks.")
 
@@ -72,23 +70,17 @@ class PostgresDocumentChunkRepository:
             row_factory=dict_row,
         ) as conn:
             async with conn.transaction():
-                document_row = await self._insert_document(
-                    conn=conn,
-                    original_filename=original_filename,
-                    content_sha256=content_sha256,
-                    total_pages=total_pages,
-                    total_chunks=len(chunks),
-                )
-                document_id = document_row["id"]
-                await self._insert_chunks(conn=conn, document_id=document_id, chunks=chunks)
+                async with conn.cursor() as cursor:
+                    await cursor.execute(
+                        """
+                        update public.documents
+                        set total_pages = %s, total_chunks = %s
+                        where id = %s
+                        """,
+                        (total_pages, len(chunks), document_id),
+                    )
 
-        return PersistedDocument(
-            id=document_row["id"],
-            original_filename=document_row["original_filename"],
-            content_sha256=document_row["content_sha256"],
-            total_pages=document_row["total_pages"],
-            total_chunks=document_row["total_chunks"],
-        )
+                await self._insert_chunks(conn=conn, document_id=document_id, chunks=chunks)
 
     async def get_relevant_chunks(
         self,
@@ -114,37 +106,6 @@ class PostgresDocumentChunkRepository:
                 )
                 rows = await cursor.fetchall()
                 return [row["content"] for row in rows]
-
-    async def _insert_document(
-        self,
-        *,
-        conn: AsyncConnection,
-        original_filename: str,
-        content_sha256: str,
-        total_pages: int,
-        total_chunks: int,
-    ) -> dict:
-        async with conn.cursor() as cursor:
-            await cursor.execute(
-                """
-                insert into public.documents (
-                    original_filename,
-                    content_sha256,
-                    status,
-                    total_pages,
-                    total_chunks
-                )
-                values (%s, %s, 'processing', %s, %s)
-                returning id, original_filename, content_sha256, total_pages, total_chunks
-                """,
-                (original_filename, content_sha256, total_pages, total_chunks),
-            )
-            row = await cursor.fetchone()
-
-        if row is None:
-            raise DocumentPersistenceError("Failed to persist document metadata.")
-
-        return row
 
     async def _insert_chunks(
         self,
