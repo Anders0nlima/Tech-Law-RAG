@@ -52,7 +52,8 @@ async def run_analysis_workflow(
         logger.info(f"Document {document_id}: Status set to PROCESSING.")
 
         # 2. Extract text
-        pdf_extraction = extract_text_from_pdf(file_bytes)
+        import io
+        pdf_extraction = extract_text_from_pdf(io.BytesIO(file_bytes))
         if not pdf_extraction.text.strip():
             raise ValueError("Extracted text is empty.")
         logger.info(f"Document {document_id}: Text extracted, {pdf_extraction.total_pages} pages.")
