@@ -1,6 +1,7 @@
 from uuid import UUID
 
-from openai import AsyncOpenAI
+from langfuse import get_client, observe
+from langfuse.openai import AsyncOpenAI
 
 from app.repositories.document_chunks import DocumentChunkRepository
 from app.schemas.dossier import RiskDossier, RiskFinding
@@ -12,6 +13,7 @@ class DossierGenerationError(Exception):
     """Raised when there is a failure during the generation of the risk dossier."""
 
 
+@observe(name="generate-risk-dossier", as_type="chain")
 async def generate_risk_dossier(
     *,
     document_id: UUID,
@@ -25,7 +27,21 @@ async def generate_risk_dossier(
     """
     Generates a RiskDossier by retrieving relevant document chunks from the repository,
     building an analysis prompt, and calling an LLM via structured outputs.
+
+    This function is wrapped with @observe() so the LLM call becomes a child span
+    inside the parent 'analysis-workflow' trace in Langfuse.
+    langfuse.openai.AsyncOpenAI automatically captures token usage, cost, and latency.
     """
+    langfuse = get_client()
+    langfuse.update_current_span(
+        metadata={
+            "document_id": str(document_id),
+            "document_name": document_name,
+            "model": model,
+            "chunk_limit": limit,
+        }
+    )
+
     # 1. Define the query used to find relevant chunks for the risk dossier
     search_query = (
         "Identify legal, compliance, security, privacy, liability, "
@@ -59,7 +75,7 @@ async def generate_risk_dossier(
     # 4. Build prompt
     messages = build_analysis_prompt(combined_text)
 
-    # 5. Call LLM to parse structured output
+    # 5. Call LLM — langfuse.openai wrapper automatically captures tokens, latency, cost
     try:
         response = await openai_client.beta.chat.completions.parse(
             model=model,

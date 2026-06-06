@@ -18,6 +18,9 @@ class Settings:
         if os.getenv("OPENAI_EMBEDDING_DIMENSIONS")
         else None
     )
+    langfuse_public_key: str | None = os.getenv("LANGFUSE_PUBLIC_KEY")
+    langfuse_secret_key: str | None = os.getenv("LANGFUSE_SECRET_KEY")
+    langfuse_host: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")
 
 
 settings = Settings()
