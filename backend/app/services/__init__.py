@@ -13,7 +13,7 @@ from app.services.embedding_provider import (
     EmbeddingProvider,
     EmbeddingProviderError,
     MockEmbeddingProvider,
-    OpenAIEmbeddingProvider,
+    GeminiEmbeddingProvider,
     create_embedding_provider,
 )
 from app.services.analysis_prompt import (
@@ -32,7 +32,7 @@ __all__ = [
     "EmbeddingProvider",
     "EmbeddingProviderError",
     "MockEmbeddingProvider",
-    "OpenAIEmbeddingProvider",
+    "GeminiEmbeddingProvider",
     "DocumentChunkPersistenceError",
     "PersistDocumentChunksCommand",
     "TextChunk",

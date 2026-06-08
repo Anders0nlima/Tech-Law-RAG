@@ -4,40 +4,39 @@ from app.services import (
     EmbeddingProvider,
     EmbeddingProviderError,
     MockEmbeddingProvider,
-    OpenAIEmbeddingProvider,
+    GeminiEmbeddingProvider,
     create_embedding_provider,
 )
 from app.core.config import Settings
 
 
-class FakeEmbeddingItem:
-    def __init__(self, index: int, embedding: list[float]) -> None:
-        self.index = index
-        self.embedding = embedding
+class FakeEmbeddingValue:
+    def __init__(self, values: list[float]) -> None:
+        self.values = values
 
 
 class FakeEmbeddingResponse:
-    def __init__(self, data: list[FakeEmbeddingItem]) -> None:
-        self.data = data
+    def __init__(self, embeddings: list[FakeEmbeddingValue]) -> None:
+        self.embeddings = embeddings
 
 
-class FakeEmbeddingsResource:
+class FakeModels:
     def __init__(self) -> None:
         self.last_request: dict | None = None
 
-    async def create(self, **kwargs) -> FakeEmbeddingResponse:
+    def embed_content(self, **kwargs) -> FakeEmbeddingResponse:
         self.last_request = kwargs
         return FakeEmbeddingResponse(
             [
-                FakeEmbeddingItem(index=1, embedding=[0.3, 0.4]),
-                FakeEmbeddingItem(index=0, embedding=[0.1, 0.2]),
+                FakeEmbeddingValue([0.1, 0.2]),
+                FakeEmbeddingValue([0.3, 0.4]),
             ]
         )
 
 
-class FakeOpenAIClient:
+class FakeGeminiClient:
     def __init__(self) -> None:
-        self.embeddings = FakeEmbeddingsResource()
+        self.models = FakeModels()
 
 
 def assert_embedding_provider(provider: EmbeddingProvider) -> EmbeddingProvider:
@@ -85,40 +84,46 @@ def test_mock_embedding_provider_matches_embedding_protocol() -> None:
 
 
 @pytest.mark.anyio
-async def test_openai_embedding_provider_sends_configured_request() -> None:
-    client = FakeOpenAIClient()
-    provider = OpenAIEmbeddingProvider(
+async def test_gemini_embedding_provider_sends_configured_request() -> None:
+    fake_client = FakeGeminiClient()
+    provider = GeminiEmbeddingProvider(
         api_key="test-key",
-        model="text-embedding-3-small",
+        model="gemini-embedding-2",
         dimensions=2,
-        client=client,
     )
+    # Monkey-patch the client creation to use our fake
+    import app.services.embedding_provider as ep
+    original_client_class = ep.genai.Client
+    ep.genai.Client = lambda **kwargs: fake_client
 
-    embeddings = await provider.embed_texts(["primeiro chunk", "segundo chunk"])
+    try:
+        embeddings = await provider.embed_texts(["primeiro chunk", "segundo chunk"])
 
-    assert embeddings == [[0.1, 0.2], [0.3, 0.4]]
-    assert client.embeddings.last_request == {
-        "model": "text-embedding-3-small",
-        "input": ["primeiro chunk", "segundo chunk"],
-        "encoding_format": "float",
-        "dimensions": 2,
-    }
-
-
-def test_openai_embedding_provider_requires_api_key() -> None:
-    with pytest.raises(EmbeddingProviderError, match="OPENAI_API_KEY"):
-        OpenAIEmbeddingProvider(api_key="")
+        assert embeddings == [[0.1, 0.2], [0.3, 0.4]]
+        assert fake_client.models.last_request["model"] == "gemini-embedding-2"
+        from google.genai import types
+        contents = fake_client.models.last_request["contents"]
+        assert len(contents) == 2
+        assert contents[0].parts[0].text == "primeiro chunk"
+        assert contents[1].parts[0].text == "segundo chunk"
+    finally:
+        ep.genai.Client = original_client_class
 
 
-def test_create_embedding_provider_uses_openai_when_api_key_is_configured() -> None:
+def test_gemini_embedding_provider_requires_api_key() -> None:
+    with pytest.raises(EmbeddingProviderError, match="GEMINI_API_KEY"):
+        GeminiEmbeddingProvider(api_key="")
+
+
+def test_create_embedding_provider_uses_gemini_when_api_key_is_configured() -> None:
     provider = create_embedding_provider(
-        Settings(openai_api_key="test-key", openai_embedding_dimensions=2)
+        Settings(gemini_api_key="test-key", gemini_embedding_dimensions=2)
     )
 
-    assert isinstance(provider, OpenAIEmbeddingProvider)
+    assert isinstance(provider, GeminiEmbeddingProvider)
 
 
 def test_create_embedding_provider_uses_mock_without_api_key() -> None:
-    provider = create_embedding_provider(Settings(openai_api_key=None))
+    provider = create_embedding_provider(Settings(gemini_api_key=None))
 
     assert isinstance(provider, MockEmbeddingProvider)

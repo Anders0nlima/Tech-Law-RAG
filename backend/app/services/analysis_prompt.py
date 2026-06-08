@@ -54,7 +54,7 @@ class LLMRiskDossierOutput(BaseModel):
 
 def build_analysis_prompt(contract_text: str) -> list[dict[str, str]]:
     """
-    Builds the messages array for the OpenAI Chat Completions API.
+    Builds the messages array for the Gemini API.
     """
     system_prompt = """You are an expert technology lawyer and contract analyst specializing in IT agreements, SaaS contracts, data privacy (e.g., GDPR, LGPD), and cybersecurity.
 Your task is to analyze the provided contract excerpts and generate a comprehensive risk dossier in the requested structured format.

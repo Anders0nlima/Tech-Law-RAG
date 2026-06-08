@@ -16,7 +16,7 @@ def test_rag_schema_migration_defines_pgvector_tables() -> None:
     assert "create table public.documents" in sql
     assert "create table public.document_chunks" in sql
     assert "create table public.risk_dossiers" in sql
-    assert "embedding extensions.vector(1536) not null" in sql
+    assert "embedding extensions.vector(768) not null" in sql
 
 
 def test_rag_schema_migration_adds_vector_similarity_index() -> None:

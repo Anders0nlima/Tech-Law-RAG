@@ -1,8 +1,8 @@
 import logging
 from uuid import UUID
 
+from google import genai
 from langfuse import get_client, observe
-from openai import AsyncOpenAI
 
 from app.repositories.document_chunks import DocumentChunkRepository
 from app.repositories.documents import DocumentRepository
@@ -30,7 +30,7 @@ async def run_analysis_workflow(
     chunk_repo: DocumentChunkRepository,
     dossier_repo: RiskDossierRepository,
     embedding_provider: EmbeddingProvider,
-    openai_client: AsyncOpenAI,
+    gemini_client: genai.Client,
 ) -> None:
     """
     Background task to orchestrate the entire RAG and analysis pipeline.
@@ -88,7 +88,7 @@ async def run_analysis_workflow(
             document_name=original_filename,
             repository=chunk_repo,
             embedding_provider=embedding_provider,
-            openai_client=openai_client,
+            gemini_client=gemini_client,
         )
         logger.info(f"Document {document_id}: Risk dossier generated.")
 

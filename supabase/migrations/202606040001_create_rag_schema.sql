@@ -36,7 +36,7 @@ create table public.document_chunks (
     start_char integer not null check (start_char >= 0),
     end_char integer not null check (end_char > start_char),
     content text not null,
-    embedding extensions.vector(1536) not null,
+    embedding extensions.vector(768) not null,
     created_at timestamptz not null default now(),
     constraint document_chunks_document_index_unique unique (document_id, chunk_index)
 );

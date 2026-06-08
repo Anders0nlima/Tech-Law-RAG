@@ -1,9 +1,9 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from hashlib import sha256
-from typing import Any, Protocol
+from typing import Protocol
 
-from openai import APIError, APIStatusError, AsyncOpenAI
+from google import genai
 
 from app.core.config import Settings, settings
 
@@ -19,7 +19,7 @@ class EmbeddingProvider(Protocol):
 
 @dataclass(frozen=True)
 class MockEmbeddingProvider:
-    dimension: int = 1536
+    dimension: int = 768
 
     def __post_init__(self) -> None:
         if self.dimension <= 0:
@@ -33,15 +33,14 @@ class MockEmbeddingProvider:
 
 
 @dataclass(frozen=True)
-class OpenAIEmbeddingProvider:
+class GeminiEmbeddingProvider:
     api_key: str
-    model: str = "text-embedding-3-small"
-    dimensions: int | None = 1536
-    client: Any | None = None
+    model: str = "gemini-embedding-2"
+    dimensions: int | None = 768
 
     def __post_init__(self) -> None:
         if not self.api_key:
-            raise EmbeddingProviderError("OPENAI_API_KEY is required.")
+            raise EmbeddingProviderError("GEMINI_API_KEY is required.")
         if self.dimensions is not None and self.dimensions <= 0:
             raise EmbeddingProviderError("Embedding dimensions must be greater than zero.")
 
@@ -49,31 +48,37 @@ class OpenAIEmbeddingProvider:
         if any(not text.strip() for text in texts):
             raise EmbeddingProviderError("Cannot embed empty text.")
 
-        client = self.client or AsyncOpenAI(api_key=self.api_key)
-        request: dict[str, Any] = {
-            "model": self.model,
-            "input": list(texts),
-            "encoding_format": "float",
-        }
-
-        if self.dimensions is not None:
-            request["dimensions"] = self.dimensions
+        client = genai.Client(api_key=self.api_key)
+        from google.genai import types
 
         try:
-            response = await client.embeddings.create(**request)
-        except (APIError, APIStatusError) as exc:
-            raise EmbeddingProviderError("OpenAI embedding request failed.") from exc
+            config = {}
+            if self.dimensions is not None:
+                config["output_dimensionality"] = self.dimensions
 
-        ordered_embeddings = sorted(response.data, key=lambda item: item.index)
-        return [list(item.embedding) for item in ordered_embeddings]
+            formatted_contents = [
+                types.Content(parts=[types.Part.from_text(text=s)]) for s in texts
+            ]
+
+            result = client.models.embed_content(
+                model=self.model,
+                contents=formatted_contents,
+                config=config if config else None,
+            )
+        except Exception as exc:
+            raise EmbeddingProviderError(
+                f"Gemini embedding request failed: {exc}"
+            ) from exc
+
+        return [list(emb.values) for emb in result.embeddings]
 
 
 def create_embedding_provider(config: Settings = settings) -> EmbeddingProvider:
-    if config.openai_api_key:
-        return OpenAIEmbeddingProvider(
-            api_key=config.openai_api_key,
-            model=config.openai_embedding_model,
-            dimensions=config.openai_embedding_dimensions,
+    if config.gemini_api_key:
+        return GeminiEmbeddingProvider(
+            api_key=config.gemini_api_key,
+            model=config.gemini_embedding_model,
+            dimensions=config.gemini_embedding_dimensions,
         )
 
     return MockEmbeddingProvider()

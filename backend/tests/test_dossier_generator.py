@@ -1,3 +1,4 @@
+import json
 from collections.abc import Sequence
 from uuid import UUID, uuid4
 
@@ -36,42 +37,22 @@ class FakeEmbeddingProvider(EmbeddingProvider):
         return [[0.1, 0.2, 0.3] for _ in texts]
 
 
-class FakeMessage:
-    def __init__(self, parsed):
-        self.parsed = parsed
+class FakeGenerateResponse:
+    def __init__(self, parsed_output: LLMRiskDossierOutput):
+        self.text = json.dumps(parsed_output.model_dump())
 
 
-class FakeChoice:
-    def __init__(self, message):
-        self.message = message
-
-
-class FakeResponse:
-    def __init__(self, parsed_output):
-        self.choices = [FakeChoice(FakeMessage(parsed_output))]
-
-
-class FakeCompletions:
-    def __init__(self, parsed_output):
+class FakeGeminiModels:
+    def __init__(self, parsed_output: LLMRiskDossierOutput):
         self.parsed_output = parsed_output
 
-    async def parse(self, **kwargs):
-        return FakeResponse(self.parsed_output)
+    def generate_content(self, **kwargs):
+        return FakeGenerateResponse(self.parsed_output)
 
 
-class FakeChat:
-    def __init__(self, parsed_output):
-        self.completions = FakeCompletions(parsed_output)
-
-
-class FakeBeta:
-    def __init__(self, parsed_output):
-        self.chat = FakeChat(parsed_output)
-
-
-class FakeAsyncOpenAI:
-    def __init__(self, parsed_output):
-        self.beta = FakeBeta(parsed_output)
+class FakeGeminiClient:
+    def __init__(self, parsed_output: LLMRiskDossierOutput):
+        self.models = FakeGeminiModels(parsed_output)
 
 
 @pytest.mark.anyio
@@ -93,7 +74,7 @@ async def test_generate_risk_dossier():
         ],
     )
     
-    client = FakeAsyncOpenAI(mock_llm_output)
+    client = FakeGeminiClient(mock_llm_output)
     repo = FakeDocumentChunkRepository()
     embedder = FakeEmbeddingProvider()
     
@@ -102,7 +83,7 @@ async def test_generate_risk_dossier():
         document_name="test_contract.pdf",
         repository=repo,
         embedding_provider=embedder,
-        openai_client=client,
+        gemini_client=client,
     )
     
     assert dossier.document_id == doc_id

@@ -12,16 +12,19 @@ class Settings:
     environment: str = os.getenv("ENVIRONMENT", "development")
     frontend_url: str = os.getenv("FRONTEND_URL", "http://localhost:5173")
     database_url: str | None = os.getenv("DATABASE_URL")
-    openai_api_key: str | None = os.getenv("OPENAI_API_KEY")
-    openai_embedding_model: str = os.getenv(
-        "OPENAI_EMBEDDING_MODEL",
-        "text-embedding-3-small",
+    # Google Gemini
+    gemini_api_key: str | None = os.getenv("GEMINI_API_KEY")
+    gemini_embedding_model: str = os.getenv(
+        "GEMINI_EMBEDDING_MODEL",
+        "gemini-embedding-2",
     )
-    openai_embedding_dimensions: int | None = (
-        int(os.environ["OPENAI_EMBEDDING_DIMENSIONS"])
-        if os.getenv("OPENAI_EMBEDDING_DIMENSIONS")
-        else None
+    gemini_embedding_dimensions: int | None = (
+        int(os.environ["GEMINI_EMBEDDING_DIMENSIONS"])
+        if os.getenv("GEMINI_EMBEDDING_DIMENSIONS")
+        else 768
     )
+    gemini_llm_model: str = os.getenv("GEMINI_LLM_MODEL", "gemini-2.5-flash")
+    # Langfuse
     langfuse_public_key: str | None = os.getenv("LANGFUSE_PUBLIC_KEY")
     langfuse_secret_key: str | None = os.getenv("LANGFUSE_SECRET_KEY")
     langfuse_host: str = os.getenv("LANGFUSE_HOST", "https://cloud.langfuse.com")

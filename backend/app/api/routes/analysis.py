@@ -3,7 +3,7 @@ from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
-from openai import AsyncOpenAI
+from google import genai
 
 from app.core.config import settings
 from app.repositories import (
@@ -35,10 +35,10 @@ def get_dossier_repo() -> PostgresRiskDossierRepository:
     return PostgresRiskDossierRepository(database_url=settings.database_url)
 
 
-def get_openai_client() -> AsyncOpenAI:
-    if not settings.openai_api_key:
-        raise HTTPException(status_code=500, detail="OpenAI API key is not configured.")
-    return AsyncOpenAI(api_key=settings.openai_api_key)
+def get_gemini_client() -> genai.Client:
+    if not settings.gemini_api_key:
+        raise HTTPException(status_code=500, detail="Gemini API key is not configured.")
+    return genai.Client(api_key=settings.gemini_api_key)
 
 
 @router.post("/", response_model=DocumentAnalysis, status_code=status.HTTP_202_ACCEPTED)
@@ -48,7 +48,7 @@ async def upload_document_for_analysis(
     document_repo: PostgresDocumentRepository = Depends(get_document_repo),
     chunk_repo: PostgresDocumentChunkRepository = Depends(get_chunk_repo),
     dossier_repo: PostgresRiskDossierRepository = Depends(get_dossier_repo),
-    openai_client: AsyncOpenAI = Depends(get_openai_client),
+    gemini_client: genai.Client = Depends(get_gemini_client),
 ):
     """
     Upload a contract PDF and start the async risk analysis workflow.
@@ -80,7 +80,7 @@ async def upload_document_for_analysis(
         chunk_repo=chunk_repo,
         dossier_repo=dossier_repo,
         embedding_provider=embedding_provider,
-        openai_client=openai_client,
+        gemini_client=gemini_client,
     )
 
     # Return pending status immediately

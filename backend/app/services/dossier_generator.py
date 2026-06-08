@@ -1,7 +1,9 @@
+import json
 from uuid import UUID
 
+from google import genai
+from google.genai import types
 from langfuse import get_client, observe
-from langfuse.openai import AsyncOpenAI
 
 from app.repositories.document_chunks import DocumentChunkRepository
 from app.schemas.dossier import RiskDossier, RiskFinding
@@ -20,17 +22,16 @@ async def generate_risk_dossier(
     document_name: str,
     repository: DocumentChunkRepository,
     embedding_provider: EmbeddingProvider,
-    openai_client: AsyncOpenAI,
-    model: str = "gpt-4o-mini",
+    gemini_client: genai.Client,
+    model: str = "gemini-2.5-flash",
     limit: int = 15,
 ) -> RiskDossier:
     """
     Generates a RiskDossier by retrieving relevant document chunks from the repository,
-    building an analysis prompt, and calling an LLM via structured outputs.
+    building an analysis prompt, and calling Gemini via JSON structured output.
 
     This function is wrapped with @observe() so the LLM call becomes a child span
     inside the parent 'analysis-workflow' trace in Langfuse.
-    langfuse.openai.AsyncOpenAI automatically captures token usage, cost, and latency.
     """
     langfuse = get_client()
     langfuse.update_current_span(
@@ -75,17 +76,31 @@ async def generate_risk_dossier(
     # 4. Build prompt
     messages = build_analysis_prompt(combined_text)
 
-    # 5. Call LLM — langfuse.openai wrapper automatically captures tokens, latency, cost
+    # 5. Call Gemini LLM with JSON structured output
     try:
-        response = await openai_client.beta.chat.completions.parse(
+        system_instruction = messages[0]["content"]
+        user_message = messages[1]["content"]
+
+        response = gemini_client.models.generate_content(
             model=model,
-            messages=messages,
-            response_format=LLMRiskDossierOutput,
-            temperature=0.0,
+            contents=user_message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+                response_mime_type="application/json",
+                response_schema=LLMRiskDossierOutput,
+                temperature=0.0,
+            ),
         )
-        llm_output = response.choices[0].message.parsed
-        if not llm_output:
-            raise DossierGenerationError("LLM returned empty parsed output.")
+
+        raw_text = response.text
+        if not raw_text:
+            raise DossierGenerationError("Gemini returned empty response.")
+
+        parsed_data = json.loads(raw_text)
+        llm_output = LLMRiskDossierOutput(**parsed_data)
+
+    except DossierGenerationError:
+        raise
     except Exception as e:
         raise DossierGenerationError(f"LLM generation failed: {e}")
 
