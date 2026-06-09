@@ -1,9 +1,5 @@
 # Tech-Law RAG: IT Compliance and Contract Analyzer
 
-<div align="center">
-<img src="https://github.com/user-attachments/assets/f1b98d04-65ba-4875-88be-6c2ceee0a75d" width="700px" />
-</div>
-
 The technology sector deals daily with software contracts, SLAs (Service Level Agreements), NDAs, and privacy policies (e.g., GDPR/LGPD). This project bridges the software development world with compliance rules and regulations.
 
 * **What it is:** A platform where IT companies upload vendor contracts or third-party API terms of use. The system analyzes the document, pointing out information security risks, privacy violations, or abusive clauses.
@@ -14,10 +10,10 @@ The technology sector deals daily with software contracts, SLAs (Service Level A
 
 ---
 
-## 🏗️ System Architecture & Project Phases
+## System Architecture & Project Phases
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/83a31d98-b8ff-4279-b2bc-2372e5585f53" alt="Tech-Law RAG Cover" width="800" />
+  <img width="945" height="513" alt="Image" src="https://github.com/user-attachments/assets/92e2750b-a7f1-47a4-ba5b-9a2fe801d26f" />
 </div>
 
 ### Functional Requirements
@@ -40,7 +36,7 @@ Langfuse is integrated into the Python backend to log every call made to the Gem
 
 ---
 
-## 🧠 Learning Notes & Technical Highlights
+## Learning Notes & Technical Highlights
 
 This project demonstrates several production-ready practices beyond a simple "Hello World" RAG application:
 
@@ -61,7 +57,7 @@ This project demonstrates several production-ready practices beyond a simple "He
 
 ---
 
-## 🚀 Runbook: How to Run, Configure, and Deploy
+## Runbook: How to Run, Configure, and Deploy
 
 Follow the steps below to run the development environment, execute tests, and deploy to production.
 
